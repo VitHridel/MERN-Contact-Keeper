@@ -4,13 +4,17 @@ const connectDB = require('./config/db')
 
 const app = express()
 
+// Connect DB
 connectDB()
+
+// Init Middleware
+app.use(express.json({extended: false}))
 
 app.get('/', (req, res) => {
     res.json({msg: 'Hello world'})
 })
 
-//Define Routes
+// Define Routes
 app.use('/users', require('./routes/users'))
 app.use('/auth', require('./routes/auth'))
 app.use('/contacts', require('./routes/contacts'))
