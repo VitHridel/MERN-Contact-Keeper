@@ -1,57 +1,79 @@
 import { useReducer } from "react";
-import {v4 as uuidv4} from 'uuid';
+import axios from 'axios'
 import ContactContext from "./contactContext";
 import contactReducer from './contactReducer';
 import {
+    GET_CONTACTS,
     ADD_CONTACT,
     DELETE_CONTACT,
+    CLEAR_CONTACTS,
+    CONTACT_ERROR,
     SET_CURRENT,
     CLEAR_CURRENT,
     UPDATE_CONTACT,
     FILTER_CONTACTS,
-    CLEAR_FILTER
+    CLEAR_FILTER,
 } from '../types'
 
 const ContactState = props => {
     const initialState = {
-        contacts: [
-            {
-                id: 1,
-                name: "Will Smith",
-                email: "will@gmail.com",
-                phone: "+420 555 555 555",
-                type: "personal"
-            },
-            {
-                id: 2,
-                name: "Sharlota Black",
-                email: "sharlot@gmail.com",
-                phone: "+420 666 666 666",
-                type: "personal"
-            },
-            {
-                id: 3,
-                name: "Denis Wine",
-                email: "denis@gmail.com",
-                phone: "+420 456 654 546",
-                type: "professional"
-            }
-        ],
+        contacts: null,
         current: null,
-        filtered: null
+        filtered: null,
+        error: null
     }
 
     const [state, dispatch] = useReducer(contactReducer, initialState)
 
+    const config = {
+        headers: {
+            'Content-Type': 'application/json'
+        }
+    }
+
+    // Get Contacts
+    const getContacts = async () => {
+        try {
+            const res = await axios.get('/contacts')
+
+            dispatch({ type: GET_CONTACTS, payload: res.data })
+        } catch (err) {
+            dispatch({ type: CONTACT_ERROR, payload: err.response.msg })
+        }
+    }
+
     // Add Contact
-    const addContact = contact => {
-        contact.id = uuidv4()
-        dispatch({ type: ADD_CONTACT, payload: contact })
+    const addContact = async contact => {
+        try {
+            const res = await axios.post('/contacts', contact, config)
+
+            dispatch({ type: ADD_CONTACT, payload: res.data })
+        } catch (err) {
+            dispatch({ type: CONTACT_ERROR, payload: err.response.msg })
+        }
     }
 
     // Delete Contact
-    const deleteContact = (id) => {
+    const deleteContact = async id => {
+        try {
+            await axios.delete(`/contacts/${id}`)
+
+            dispatch({ type: DELETE_CONTACT, payload: id })
+        } catch (err) {
+            dispatch({ type: CONTACT_ERROR, payload: err.response.msg })
+        }
         dispatch({ type: DELETE_CONTACT, payload: id })
+    }
+
+    // Update Contact
+    const updateContact = async contact => {
+        try {
+            const res = await axios.put(`/contacts/${contact._id}`, contact, config)
+
+            dispatch({ type: UPDATE_CONTACT, payload: res.data })
+        } catch (err) {
+            dispatch({ type: CONTACT_ERROR, payload: err.response.msg })
+        }
     }
 
     // Set Current Contact
@@ -62,11 +84,6 @@ const ContactState = props => {
     // Clear Current Contact
     const clearCurrent = () => {
         dispatch({ type: CLEAR_CURRENT })
-    }
-    
-    // Update Contact
-    const updateContact = contact => {
-        dispatch({ type: UPDATE_CONTACT, payload: contact })
     }
 
     // Filter Contacts
@@ -79,18 +96,26 @@ const ContactState = props => {
         dispatch({ type: CLEAR_FILTER })
     }
 
+    // Clear Contacts when Logout
+    const logoutClearContacts = () => {
+        dispatch({ type: CLEAR_CONTACTS })
+    }
+
     return (
         <ContactContext.Provider value={{
             contacts: state.contacts, 
             current: state.current,
             filtered: state.filtered,
+            error: state.error,
+            getContacts,
             addContact, 
             deleteContact, 
             setCurrent, 
             clearCurrent,
             updateContact,
             filterContacts,
-            clearFilter
+            clearFilter,
+            logoutClearContacts
         }}>
             {props.children}
         </ContactContext.Provider>

@@ -42,7 +42,7 @@ router.post('/', [ auth,
                type,
                user: req.user.id
             })
-            newContact.save()
+            await newContact.save()
             res.json(newContact)           
         } catch (err) {
             console.log(err.message);
@@ -70,7 +70,8 @@ router.put('/:id', auth, async (req, res) => {
         if(!contact) return res.status(404).json({ msg: 'Contact not found' })
 
         // Make sure user owns contact
-        if(contact.user.toString() !== req.user.id) {
+        const contactID = contact.user.toString()
+        if(contactID !== req.user.id) {
             return res.status(401).json({ msg: 'Not authorized' })
         }
 

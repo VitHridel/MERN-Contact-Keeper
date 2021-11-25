@@ -1,10 +1,29 @@
-import { useState, useContext } from 'react';
+import { useState, useContext, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { PropTypes } from 'prop-types';
 import { AlertContext } from '../../context/alert/AlertContext';
+import { AuthContext } from '../../context/auth/authContext';
 
 const Register = () => {
     const alertContext = useContext(AlertContext)
+    const authContext = useContext(AuthContext)
 
     const { setAlert } = alertContext
+    const { register, error, clearErrors, isAuthenticated } = authContext
+
+    const navigate = useNavigate()
+
+    useEffect(() => {
+        if(isAuthenticated) {
+           navigate('/')
+        }
+
+        if(error) {
+            setAlert(error, 'danger')
+            clearErrors()
+        }
+        // eslint-disable-next-line
+    }, [error, isAuthenticated])
 
     const [ user, setUser ] = useState({
         name: '',
@@ -23,7 +42,7 @@ const Register = () => {
         if (password !== password2) {
             setAlert('Passwords do not match', 'danger')
         } else {
-            console.log(user);
+            register({name, email, password})
             setUser({
                 name: '',
                 email: '',
@@ -60,5 +79,11 @@ const Register = () => {
         </div>
     )
 }
+
+Register.propTypes = {
+    history: PropTypes.shape({
+      push: PropTypes.func.isRequired,
+    }),
+  };
 
 export default Register
